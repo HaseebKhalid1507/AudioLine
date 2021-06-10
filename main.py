@@ -5,6 +5,9 @@ import re
 from time import sleep
 from progress.bar import FillingSquaresBar
 
+#	HOLDS ALL PLAYED VIDEOS
+played = []
+
 #	FUNCTION TO PLAY AUDIO
 def playvideo(url):
 	#	INITIALIZE VIDEO
@@ -24,10 +27,11 @@ def playvideo(url):
 	#	START PLAYER
 	media.play()
 
-	#	INCREMENT BAR
-	bar.next()
 	while media.is_playing() == False:
 		pass
+	
+	#	INCREMENT BAR
+	bar.next()
 	while media.is_playing():
 		sleep(1)
 		bar.next()
@@ -35,6 +39,8 @@ def playvideo(url):
 
 #	FUNCTION TO KEEP PLAYING SONGS
 def autoplay(url):
+	#	ADD URL TO LIST OF PLAYED SONGS
+	played.append(url)
 	#	PLAY CURRENT VIDEO
 	playvideo(url)
 
@@ -45,9 +51,9 @@ def autoplay(url):
 
 	#	REMOVE DUPLICATES FROM LIST
 	for i in video_ids_dupes:
-		if i not in video_ids:
+		if i not in video_ids and "https://www.youtube.com/watch?v="+i not in played:
 			video_ids.append(i)
-	url = ("https://www.youtube.com/watch?v=" + video_ids[1])
+	url = ("https://www.youtube.com/watch?v=" + video_ids[0])
 	
 	#	RECURSION PAGMAN
 	autoplay(url)
