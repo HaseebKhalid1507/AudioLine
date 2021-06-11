@@ -47,6 +47,7 @@ This section should list any major frameworks that you built your project using.
 * [Pafy](https://pypi.org/project/pafy/)
 * [python-vlc](https://pypi.org/project/python-vlc/)
 * [Progress](https://pypi.org/project/progress/)
+* [youtube_search_python](https://pypi.org/project/youtube-search-python/)
 
 
 
