@@ -144,7 +144,7 @@ def main():
 
 		elif flag == 6:
 			#	INPUT SEARCH TERM
-			search = input("Enter search term:")
+			search = input("Enter search term: ")
 			search_playlist(search)
 
 		else:
