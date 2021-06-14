@@ -46,7 +46,7 @@ This project is currently nowhere near finished, so I'll be adding more features
 This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 * [Pafy](https://pypi.org/project/pafy/)
 * [python-vlc](https://pypi.org/project/python-vlc/)
-* [Progress](https://pypi.org/project/progress/)
+* [Rich](https://pypi.org/project/rich/)
 * [youtube_search_python](https://pypi.org/project/youtube-search-python/)
 
 
@@ -63,7 +63,7 @@ This script requires Python and VLC to run
 
 1. Clone the repo
 ```sh
-git clone https://github.com/your_username_/Project-Name.git
+git clone https://github.com/HaseebKhalid1507/AudioLine
 ```
 2. Install requirements.txt
 ```sh
