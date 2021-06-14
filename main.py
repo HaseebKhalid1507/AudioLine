@@ -3,152 +3,214 @@ import vlc
 import urllib.request
 import re
 from time import sleep
-from progress.bar import FillingSquaresBar
+from rich.progress import track, Progress
 from youtubesearchpython import PlaylistsSearch
+from os import system
+import sys
 
-#	HOLDS ALL PLAYED VIDEOS
-played = []
 
-#	FUNCTION TO PLAY AUDIO
-def playvideo(url):
-	#	INITIALIZE VIDEO
-	video = pafy.new(url)
-	audio = video.getbestaudio()
-	media = vlc.MediaPlayer(audio.url)
+def isWindows():
+    if sys.platform == "win32":
+        return True
+    elif sys.platform == "linux" or sys.platform == "linux2":
+        return False
+    else:
+        raise OSError("Unsupported Operating System! [WIN/LINUX ONLY]")
 
-	#	PRINT VIDEO DETAILS
-	print("\n--------------------------------------------------------------------------------")
-	print("\nNOW PLAYING: \n\t" + video.title)
-	#print (video.duration)
-	print("\tViews:  " + f"{video.viewcount:,d}" + "\t\t\tDuration:  " + video.duration)
 
-	#	ITITIALIZE PROGRESS BAR
-	bar = FillingSquaresBar("\tPlaying for:", max=(video.length))
+def cls():
+    if isWindows():
+        system("cls")
+    else:
+        system("clear")
 
-	#	START PLAYER
-	media.play()
 
-	while media.is_playing() == False:
-		pass
-	
-	#	INCREMENT BAR
-	bar.next()
-	while media.is_playing():
-		sleep(1)
-		#media.stop()			#	FOR BUG FIXING
-		bar.next()
-	bar.finish()
+class AudioLine:
+    """ The Main Object for the AudioLine Process to Utilize. """
 
-#	FUNCTION TO KEEP PLAYING SONGS
-def autoplay(url):
-	#	ADD URL TO LIST OF PLAYED SONGS
-	played.append(url)
-	#	PLAY CURRENT VIDEO
-	playvideo(url)
+    def __init__(self):
+        self.played = []
+        self.video_ids = []
+        self.media = None
 
-	#	CHANGE CURRENT VIDEO TO NEXT ONE
-	html = urllib.request.urlopen(url)
-	video_ids_dupes = re.findall(r"watch\?v=(\S{11})", html.read().decode())
-	video_ids = []
+    #	FUNCTION TO PLAY AUDIO
+    def playvideo(self, url):
+        #	INITIALIZE VIDEO
+        video = pafy.new(url)
+        audio = video.getbestaudio()
+        self.media = vlc.MediaPlayer(audio.url)
 
-	#	REMOVE DUPLICATES FROM LIST
-	for i in video_ids_dupes:
-		if i not in video_ids and "https://www.youtube.com/watch?v="+i not in played:
-			video_ids.append(i)
-	url = ("https://www.youtube.com/watch?v=" + video_ids[0])
-	
-	#	RECURSION PAGMAN
-	autoplay(url)
+        #	PRINT VIDEO DETAILS
+        print("\n--------------------------------------------------------------------------------")
+        print("\nNOW PLAYING: \n\t" + video.title)
+        # print (video.duration)
+        print("\tViews:  " + f"{video.viewcount:,d}" + "\t\t\tDuration:  " + video.duration)
+        print("\t\t\tPress 'CTRL+C' to Skip Song!")
 
-#	FUNCTION TO TAKE FIRST VIDEO FROM YOUTUBE SEARCH PAGE
-def search_youtube(search):
-	search_url = "https://www.youtube.com/results?search_query=" + search.replace(" ", "+")
-	html = urllib.request.urlopen(search_url)
-	video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
-	url = ("https://www.youtube.com/watch?v=" + video_ids[0])
-	return url
+        with Progress(transient=True) as prog:
+            song_play = prog.add_task("[green]Playing Song", total=video.length)
 
-#	FUNCTION TO PLAY VIDEOS IN A PLAYLIST
-def play_playlist(url):
+            #	START PLAYER
+            self.media.play()
 
-	html = urllib.request.urlopen(url)
-	video_ids_dupes = re.findall(r"watch\?v=(\S{11})", html.read().decode())
-	video_ids = []
+            while not prog.finished:
+                while self.media.is_playing():
+                    sleep(1)
+                    prog.update(song_play, advance=1)
 
-	#	REMOVE DUPLICATES FROM LIST
-	for i in video_ids_dupes:
-		if i not in video_ids and "https://www.youtube.com/watch?v="+i not in played:
-			video_ids.append(i)
+        print("DONE PLAYING %s!" % video.title)
 
-	for i in video_ids:
-		playvideo("https://www.youtube.com/watch?v="+i)
 
-#	FUNCTION TO TAKE FIRST PLAYLIST FROM YOUTUBE SEARCH PAGE
-def search_playlist(search):
-	playlistsSearch = PlaylistsSearch(search, limit = 1)
-	play_playlist(playlistsSearch.result()["result"][0]["link"])
+    #	FUNCTION TO KEEP PLAYING SONGS
+    def autoplay(self,url):
+        #	ADD URL TO LIST OF PLAYED SONGS
+        self.played.append(url)
+        #	PLAY CURRENT VIDEO
+        self.playvideo(url)
 
-#	MAIN SCRIPT FUNCTION
-def main():
+        #	CHANGE CURRENT VIDEO TO NEXT ONE
+        html = urllib.request.urlopen(url)
+        video_ids_dupes = re.findall(r"watch\?v=(\S{11})", html.read().decode())
 
-	print("")
-	print("\t █████╗ ██╗   ██╗██████╗ ██╗ ██████╗ ██╗     ██╗███╗   ██╗███████╗")
-	print("\t██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗██║     ██║████╗  ██║██╔════╝")
-	print("\t███████║██║   ██║██║  ██║██║██║   ██║██║     ██║██╔██╗ ██║█████╗  ")
-	print("\t██╔══██║██║   ██║██║  ██║██║██║   ██║██║     ██║██║╚██╗██║██╔══╝  ")
-	print("\t██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████╗██║██║ ╚████║███████╗")
-	print("\t╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝")
-                                                                  
-	flag = 0
+        #	REMOVE DUPLICATES FROM LIST
+        for i in video_ids_dupes:
+            if i not in self.video_ids and "https://www.youtube.com/watch?v=" + i not in self.played:
+                self.video_ids.append(i)
+        url = ("https://www.youtube.com/watch?v=" + self.video_ids[0])
 
-	while flag != 7:
-		
-		#	ALL OPTIONS
-		print("================================================================================")
-		print("1. Video URL\n2. Video URL (Autoplay)\n3. Video Search\n4. Video Search (Autoplay)\n5. Playlist URL\n6. Playlist search\n7. Exit")
-		print("================================================================================")
-		
-		#	ENTER CHOICE
-		flag = int(input("Enter number for choice: "))
+        #	RECURSION PAGMAN
+        self.autoplay(url)
 
-		if flag == 1:
-			#	INPUT VIDEO URL
-			url = input("Enter URL: ")
-			#url = "https://www.youtube.com/watch?v=8UVNT4wvIGY"	# For bug fixing
-			playvideo(url)
+    #	FUNCTION TO TAKE FIRST VIDEO FROM YOUTUBE SEARCH PAGE
+    def search_youtube(self, search):
+        search_url = "https://www.youtube.com/results?search_query=" + search.replace(" ", "+")
+        html = urllib.request.urlopen(search_url)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        url = ("https://www.youtube.com/watch?v=" + video_ids[0])
+        return url
 
-		elif flag == 2:
-			#	INPUT VIDEO URL
-			url = input("Enter URL: ")
-			#url = "https://www.youtube.com/watch?v=2ZIpFytCSVc"	# For bug fixing
-			autoplay(url)
+    #	FUNCTION TO PLAY VIDEOS IN A PLAYLIST
+    def play_playlist(self, url):
 
-		elif flag == 3:
-			#	INPUT SEARCH TERM
-			search = input("Enter search term: ")
-			#search = "Stephen - play me like a violin"				# For bug fixing
-			url = search_youtube(search)
-			playvideo(url)
+        html = urllib.request.urlopen(url)
+        video_ids_dupes = re.findall(r"watch\?v=(\S{11})", html.read().decode())
 
-		elif flag == 4:
-			#	INPUT SEARCH TERM
-			search = input("Enter search term: ")
-			#search = "Stephen - play me like a violin"				# For bug fixing
-			url = search_youtube(search)
-			autoplay(url)
+        #	REMOVE DUPLICATES FROM LIST
+        for i in video_ids_dupes:
+            if i not in self.video_ids and "https://www.youtube.com/watch?v=" + i not in self.played:
+                self.video_ids.append(i)
 
-		elif flag == 5:
-			#	INPUT PLAYLIST URL
-			url = input("Enter playlist url: ")
-			play_playlist(url)
+            for i in self.video_ids:
+                self.playvideo("https://www.youtube.com/watch?v=" + i)
 
-		elif flag == 6:
-			#	INPUT SEARCH TERM
-			search = input("Enter search term: ")
-			search_playlist(search)
+    #	FUNCTION TO TAKE FIRST PLAYLIST FROM YOUTUBE SEARCH PAGE
+    def search_playlist(self, search):
+        playlistsSearch = PlaylistsSearch(search, limit=1)
+        self.play_playlist(playlistsSearch.result()["result"][0]["link"])
 
-		else:
-			print("\nPleas input number between 0 and 8")
+    #	MAIN SCRIPT FUNCTION
+    def menu(self):
 
-if __name__ == "__main__":
-	main()
+        flag = 0
+
+        while flag != 7:
+
+            cls()
+
+            print("")
+            print("\t █████╗ ██╗   ██╗██████╗ ██╗ ██████╗ ██╗     ██╗███╗   ██╗███████╗")
+            print("\t██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗██║     ██║████╗  ██║██╔════╝")
+            print("\t███████║██║   ██║██║  ██║██║██║   ██║██║     ██║██╔██╗ ██║█████╗  ")
+            print("\t██╔══██║██║   ██║██║  ██║██║██║   ██║██║     ██║██║╚██╗██║██╔══╝  ")
+            print("\t██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████╗██║██║ ╚████║███████╗")
+            print("\t╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝")
+            print("\t════════════════════════ v1.0.0 REWRITE ══════════════════════════")
+
+            #	ALL OPTIONS
+            print("================================================================================")
+            print(
+                "1. Video URL\n2. Video URL (Autoplay)\n3. Video Search\n4. Video Search (Autoplay)\n5. Playlist URL\n6. Playlist Search\n7. Exit")
+            print("================================================================================")
+
+            #	ENTER CHOICE
+            flag = int(input("Enter Number for Choice: "))
+
+            if flag == 1:
+                #	INPUT VIDEO URL
+                url = input("Enter URL: ")
+                # url = "https://www.youtube.com/watch?v=8UVNT4wvIGY"	# For bug fixing
+                try:
+                    self.playvideo(url)
+                except KeyboardInterrupt:
+                    self.media.stop()
+                    del self.media
+                    pass
+
+            elif flag == 2:
+                #	INPUT VIDEO URL
+                url = input("Enter URL: ")
+                # url = "https://www.youtube.com/watch?v=2ZIpFytCSVc"	# For bug fixing
+                try:
+                    self.autoplay(url)
+                except KeyboardInterrupt:
+                    self.media.stop()
+                    del self.media
+                    self.video_ids.clear()
+                    pass
+
+            elif flag == 3:
+                #	INPUT SEARCH TERM
+                search = input("Enter Search Term: ")
+                # search = "Stephen - play me like a violin"				# For bug fixing
+                url = self.search_youtube(search)
+                try:
+                    self.playvideo(url)
+                except KeyboardInterrupt:
+                    self.media.stop()
+                    del self.media
+                    pass
+
+            elif flag == 4:
+                #	INPUT SEARCH TERM
+                search = input("Enter Search Term: ")
+                # search = "Stephen - play me like a violin"				# For bug fixing
+                url = self.search_youtube(search)
+                try:
+                    self.autoplay(url)
+                except KeyboardInterrupt:
+                    self.media.stop()
+                    del self.media
+                    self.video_ids.clear()
+                    pass
+
+            elif flag == 5:
+                #	INPUT PLAYLIST URL
+                url = input("Enter Playlist URL: ")
+                try:
+                    self.play_playlist(url)
+                except KeyboardInterrupt:
+                    self.media.stop()
+                    del self.media
+                    self.video_ids.clear()
+                    pass
+
+            elif flag == 6:
+                #	INPUT SEARCH TERM
+                search = input("Enter Search Term: ")
+                try:
+                    self.search_playlist(search)
+                except KeyboardInterrupt:
+                    self.media.stop()
+                    del self.media
+                    self.video_ids.clear()
+                    pass
+
+            elif flag == 7:
+                exit(7)
+
+            else:
+                print("\nPleas Input a Number Between 1 and 7!")
+
+if __name__ == '__main__':
+    al = AudioLine()
+    al.menu()
