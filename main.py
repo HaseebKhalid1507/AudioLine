@@ -53,10 +53,13 @@ class AudioLine:
             #	START PLAYER
             self.media.play()
 
-            while not prog.finished:
-                while self.media.is_playing():
-                    sleep(1)
-                    prog.update(song_play, advance=1)
+            while self.media.is_playing() == False:
+                pass
+
+            while self.media.is_playing():
+                sleep(1)
+                self.media.stop()
+                prog.update(song_play, advance=1)
 
         print("DONE PLAYING %s!" % video.title)
 
@@ -100,8 +103,8 @@ class AudioLine:
             if i not in self.video_ids and "https://www.youtube.com/watch?v=" + i not in self.played:
                 self.video_ids.append(i)
 
-            for i in self.video_ids:
-                self.playvideo("https://www.youtube.com/watch?v=" + i)
+        for i in self.video_ids:
+            self.playvideo("https://www.youtube.com/watch?v=" + i)
 
     #	FUNCTION TO TAKE FIRST PLAYLIST FROM YOUTUBE SEARCH PAGE
     def search_playlist(self, search):
