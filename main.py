@@ -58,7 +58,6 @@ class AudioLine:
 
             while self.media.is_playing():
                 sleep(1)
-                self.media.stop()
                 prog.update(song_play, advance=1)
 
         print("DONE PLAYING %s!" % video.title)
