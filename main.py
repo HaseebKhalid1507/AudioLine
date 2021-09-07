@@ -35,6 +35,10 @@ class AudioLine:
 
     #	FUNCTION TO PLAY AUDIO
     def playvideo(self, url):
+
+        #	ADD URL TO LIST OF PLAYED SONGS
+        self.played.append(url)
+
         #	INITIALIZE VIDEO
         video = pafy.new(url)
         audio = video.getbestaudio()
@@ -44,11 +48,13 @@ class AudioLine:
         print("\n--------------------------------------------------------------------------------")
         print("\nNOW PLAYING: \n\t" + video.title)
         # print (video.duration)
-        print("\tViews:  " + f"{video.viewcount:,d}" + "\t\t\tDuration:  " + video.duration)
+        print("\tViews:  " + f"{video.viewcount:,d}" +
+              "\t\t\tDuration:  " + video.duration)
         print("\t\t\tPress 'CTRL+C' to Skip Song!")
 
         with Progress(transient=True) as prog:
-            song_play = prog.add_task("[green]Playing Song", total=video.length)
+            song_play = prog.add_task(
+                "[green]Playing Song", total=video.length)
 
             #	START PLAYER
             self.media.play()
@@ -62,30 +68,29 @@ class AudioLine:
 
         print("DONE PLAYING %s!" % video.title)
 
-
     #	FUNCTION TO KEEP PLAYING SONGS
-    def autoplay(self,url):
-        #	ADD URL TO LIST OF PLAYED SONGS
-        self.played.append(url)
+    def autoplay(self, url):
         #	PLAY CURRENT VIDEO
         self.playvideo(url)
 
+        self.video_ids = []
+        video_ids_dupes = []
         #	CHANGE CURRENT VIDEO TO NEXT ONE
         html = urllib.request.urlopen(url)
-        video_ids_dupes = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        video_ids_dupes = re.findall(
+            r"watch\?v=(\S{11})", html.read().decode())
 
         #	REMOVE DUPLICATES FROM LIST
         for i in video_ids_dupes:
-            if i not in self.video_ids and "https://www.youtube.com/watch?v=" + i not in self.played:
-                self.video_ids.append(i)
-        url = ("https://www.youtube.com/watch?v=" + self.video_ids[0])
-
-        #	RECURSION PAGMAN
-        self.autoplay(url)
+            if "https://www.youtube.com/watch?v=" + i not in self.played:
+                self.autoplay("https://www.youtube.com/watch?v=" + i)
+                # RECURSION PAGMAN
 
     #	FUNCTION TO TAKE FIRST VIDEO FROM YOUTUBE SEARCH PAGE
+
     def search_youtube(self, search):
-        search_url = "https://www.youtube.com/results?search_query=" + search.replace(" ", "+")
+        search_url = "https://www.youtube.com/results?search_query=" + \
+            search.replace(" ", "+")
         html = urllib.request.urlopen(search_url)
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
         url = ("https://www.youtube.com/watch?v=" + video_ids[0])
@@ -95,7 +100,8 @@ class AudioLine:
     def play_playlist(self, url):
 
         html = urllib.request.urlopen(url)
-        video_ids_dupes = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        video_ids_dupes = re.findall(
+            r"watch\?v=(\S{11})", html.read().decode())
 
         #	REMOVE DUPLICATES FROM LIST
         for i in video_ids_dupes:
@@ -129,18 +135,20 @@ class AudioLine:
             print("\t════════════════════════ v1.0.0 REWRITE ══════════════════════════")
 
             #	ALL OPTIONS
-            print("================================================================================")
             print(
-                "1. Video URL\n2. Video URL (Autoplay)\n3. Video Search\n4. Video Search (Autoplay)\n5. Playlist URL\n6. Playlist Search\n7. Exit")
-            print("================================================================================")
+                "================================================================================")
+            print(
+                "1. Video Search/URL\n2. Video Search/URL (Autoplay)\n3. Playlist URL\n4. Playlist Search\n5. Exit")
+            print(
+                "================================================================================")
 
             #	ENTER CHOICE
             flag = int(input("Enter Number for Choice: "))
-
             if flag == 1:
-                #	INPUT VIDEO URL
-                url = input("Enter URL: ")
-                # url = "https://www.youtube.com/watch?v=8UVNT4wvIGY"	# For bug fixing
+                #	INPUT SEARCH TERM
+                search = input("Enter Search Term/URL: ")
+                # search = "Stephen - play me like a violin"				# For bug fixing
+                url = self.search_youtube(search)
                 try:
                     self.playvideo(url)
                 except KeyboardInterrupt:
@@ -149,9 +157,10 @@ class AudioLine:
                     pass
 
             elif flag == 2:
-                #	INPUT VIDEO URL
-                url = input("Enter URL: ")
-                # url = "https://www.youtube.com/watch?v=2ZIpFytCSVc"	# For bug fixing
+                #	INPUT SEARCH TERM
+                search = input("Enter Search Term/URL: ")
+                # search = "off the grid"				# For bug fixing
+                url = self.search_youtube(search)
                 try:
                     self.autoplay(url)
                 except KeyboardInterrupt:
@@ -161,31 +170,6 @@ class AudioLine:
                     pass
 
             elif flag == 3:
-                #	INPUT SEARCH TERM
-                search = input("Enter Search Term: ")
-                # search = "Stephen - play me like a violin"				# For bug fixing
-                url = self.search_youtube(search)
-                try:
-                    self.playvideo(url)
-                except KeyboardInterrupt:
-                    self.media.stop()
-                    del self.media
-                    pass
-
-            elif flag == 4:
-                #	INPUT SEARCH TERM
-                search = input("Enter Search Term: ")
-                # search = "Stephen - play me like a violin"				# For bug fixing
-                url = self.search_youtube(search)
-                try:
-                    self.autoplay(url)
-                except KeyboardInterrupt:
-                    self.media.stop()
-                    del self.media
-                    self.video_ids.clear()
-                    pass
-
-            elif flag == 5:
                 #	INPUT PLAYLIST URL
                 url = input("Enter Playlist URL: ")
                 try:
@@ -196,7 +180,7 @@ class AudioLine:
                     self.video_ids.clear()
                     pass
 
-            elif flag == 6:
+            elif flag == 4:
                 #	INPUT SEARCH TERM
                 search = input("Enter Search Term: ")
                 try:
@@ -207,11 +191,12 @@ class AudioLine:
                     self.video_ids.clear()
                     pass
 
-            elif flag == 7:
-                exit(7)
+            elif flag == 5:
+                exit()
 
             else:
                 print("\nPleas Input a Number Between 1 and 7!")
+
 
 if __name__ == '__main__':
     al = AudioLine()
