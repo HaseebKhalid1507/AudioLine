@@ -44,6 +44,7 @@ This project is currently nowhere near finished, so I'll be adding more features
 
 ### Built With
 This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
+* [youtube-dl](https://pypi.org/project/youtube_dl/)
 * [Pafy](https://pypi.org/project/pafy/)
 * [python-vlc](https://pypi.org/project/python-vlc/)
 * [Rich](https://pypi.org/project/rich/)
