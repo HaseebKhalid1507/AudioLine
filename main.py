@@ -1,13 +1,9 @@
-import pafy
-import vlc
-import urllib.request
-import re
+import pafy , vlc , urllib.request , re , inquirer , sys
 from time import sleep
 from rich.progress import track, Progress
 from youtubesearchpython import PlaylistsSearch
 from os import system
-import sys
-
+from colors import bcolors
 
 def isWindows():
     if sys.platform == "win32":
@@ -45,12 +41,12 @@ class AudioLine:
         self.media = vlc.MediaPlayer(audio.url)
 
         #	PRINT VIDEO DETAILS
-        print("\n--------------------------------------------------------------------------------")
-        print("\nNOW PLAYING: \n\t" + video.title)
-        # print (video.duration)
-        print("\tViews:  " + f"{video.viewcount:,d}" +
-              "\t\t\tDuration:  " + video.duration)
-        print("\t\t\tPress 'CTRL+C' to Skip Song!")
+        print(f"\n{'-' * 70}\n")
+
+        print(bcolors.HEADER + "Now Playing: " + bcolors.OKCYAN + video.title)
+        print(bcolors.HEADER + "\nViews: " + bcolors.OKCYAN + f"{video.viewcount:,d}")
+        print(bcolors.HEADER + "\nDuration: " + bcolors.OKCYAN + video.duration)
+        print(bcolors.WARNING + "\nPress 'CTRL+C' to Skip Song!\n" + bcolors.ENDC)
 
         with Progress(transient=True) as prog:
             song_play = prog.add_task(
@@ -66,7 +62,7 @@ class AudioLine:
                 sleep(1)
                 prog.update(song_play, advance=1)
 
-        print("DONE PLAYING %s!" % video.title)
+        print(bcolors.OKGREEN + "DONE PLAYING %s!" % video.title)
 
     #	FUNCTION TO KEEP PLAYING SONGS
     def autoplay(self, url):
@@ -88,9 +84,16 @@ class AudioLine:
 
     #	FUNCTION TO TAKE FIRST VIDEO FROM YOUTUBE SEARCH PAGE
 
-    def search_youtube(self, search):
-        search_url = "https://www.youtube.com/results?search_query=" + \
-            search.replace(" ", "+")
+    def search_youtube(self, search: str):
+        # Check if the given search term is a valid youtube video link
+        if(search.startswith("https://www.youtube.com")):
+            res = urllib.request.urlopen(search)
+
+            if(res.getcode() == 200):
+                return search
+
+        search_url = "https://www.youtube.com/results?search_query={}" + search.replace(" ", "+")
+
         html = urllib.request.urlopen(search_url)
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
         url = ("https://www.youtube.com/watch?v=" + video_ids[0])
@@ -119,85 +122,86 @@ class AudioLine:
     #	MAIN SCRIPT FUNCTION
     def menu(self):
 
-        flag = 0
+        cls()
 
-        while flag != 7:
+        print(bcolors.HEADER + "")
+        print("\t █████╗ ██╗   ██╗██████╗ ██╗ ██████╗ ██╗     ██╗███╗   ██╗███████╗")
+        print("\t██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗██║     ██║████╗  ██║██╔════╝")
+        print("\t███████║██║   ██║██║  ██║██║██║   ██║██║     ██║██╔██╗ ██║█████╗  ")
+        print("\t██╔══██║██║   ██║██║  ██║██║██║   ██║██║     ██║██║╚██╗██║██╔══╝  ")
+        print("\t██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████╗██║██║ ╚████║███████╗")
+        print("\t╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝")
+        print("\t════════════════════════ v1.0.0 REWRITE ══════════════════════════" , bcolors.ENDC , "\n")
 
-            cls()
+        questions = [
+            inquirer.List('option',
+                        message="Choose An Option",
+                        choices=['Video Search/URL', 'Video Search/URL (Autoplay)', 'Playlist URL', 'Playlist Search', 'Exit'],
+                    ),
+        ]
 
-            print("")
-            print("\t █████╗ ██╗   ██╗██████╗ ██╗ ██████╗ ██╗     ██╗███╗   ██╗███████╗")
-            print("\t██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗██║     ██║████╗  ██║██╔════╝")
-            print("\t███████║██║   ██║██║  ██║██║██║   ██║██║     ██║██╔██╗ ██║█████╗  ")
-            print("\t██╔══██║██║   ██║██║  ██║██║██║   ██║██║     ██║██║╚██╗██║██╔══╝  ")
-            print("\t██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████╗██║██║ ╚████║███████╗")
-            print("\t╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝")
-            print("\t════════════════════════ v1.0.0 REWRITE ══════════════════════════")
+        flag = inquirer.prompt(questions)["option"]
 
-            #	ALL OPTIONS
-            print(
-                "================================================================================")
-            print(
-                "1. Video Search/URL\n2. Video Search/URL (Autoplay)\n3. Playlist URL\n4. Playlist Search\n5. Exit")
-            print(
-                "================================================================================")
-
-            #	ENTER CHOICE
-            flag = int(input("Enter Number for Choice: "))
-            if flag == 1:
-                #	INPUT SEARCH TERM
-                search = input("Enter Search Term/URL: ")
-                # search = "Stephen - play me like a violin"				# For bug fixing
-                url = self.search_youtube(search)
-                try:
-                    self.playvideo(url)
-                except KeyboardInterrupt:
-                    self.media.stop()
-                    del self.media
-                    pass
-
-            elif flag == 2:
-                #	INPUT SEARCH TERM
-                search = input("Enter Search Term/URL: ")
-                # search = "off the grid"				# For bug fixing
-                url = self.search_youtube(search)
-                try:
-                    self.autoplay(url)
-                except KeyboardInterrupt:
-                    self.media.stop()
-                    del self.media
-                    self.video_ids.clear()
-                    pass
-
-            elif flag == 3:
-                #	INPUT PLAYLIST URL
-                url = input("Enter Playlist URL: ")
-                try:
-                    self.play_playlist(url)
-                except KeyboardInterrupt:
-                    self.media.stop()
-                    del self.media
-                    self.video_ids.clear()
-                    pass
-
-            elif flag == 4:
-                #	INPUT SEARCH TERM
-                search = input("Enter Search Term: ")
-                try:
-                    self.search_playlist(search)
-                except KeyboardInterrupt:
-                    self.media.stop()
-                    del self.media
-                    self.video_ids.clear()
-                    pass
-
-            elif flag == 5:
+        #	ENTER CHOICE
+        if flag == "Video Search/URL":
+            #	INPUT SEARCH TERM
+            search = input(bcolors.OKCYAN + "Enter Search Term/URL: " + bcolors.ENDC)
+            print(bcolors.ENDC , end="")
+            # search = "Stephen - play me like a violin"				# For bug fixing
+            url = self.search_youtube(search)
+            try:
+                self.playvideo(url)
+            except KeyboardInterrupt:
+                self.media.stop()
+                del self.media
+                # Terminate the program on KeyBoardInterrupt
                 exit()
 
-            else:
-                print("\nPleas Input a Number Between 1 and 7!")
+        elif flag == "Video Search/URL (Autoplay)":
+            #	INPUT SEARCH TERM
+            search = input(bcolors.OKCYAN + "Enter Search Term/URL: " + bcolors.ENDC)
+            # search = "off the grid"				# For bug fixing
+            url = self.search_youtube(search)
+            try:
+                self.autoplay(url)
+            except KeyboardInterrupt:
+                self.media.stop()
+                del self.media
+                self.video_ids.clear()
+                exit()
+
+        elif flag == 'Playlist URL':
+            #	INPUT PLAYLIST URL
+            url = input(bcolors.OKCYAN + "Enter Playlist URL: " + bcolors.ENDC)
+
+            try:
+                self.play_playlist(url)
+            except KeyboardInterrupt:
+                self.media.stop()
+                del self.media
+                self.video_ids.clear()
+                exit()
+
+        elif flag == 'Playlist Search':
+            #	INPUT SEARCH TERM
+            search = input(bcolors.OKCYAN + "Enter Search Term: " + bcolors.ENDC)
+            
+            try:
+                self.search_playlist(search)
+            except KeyboardInterrupt:
+                self.media.stop()
+                del self.media
+                self.video_ids.clear()
+                exit()
+                
+
+        elif flag == 'Exit':
+            exit()
 
 
 if __name__ == '__main__':
     al = AudioLine()
-    al.menu()
+    try:
+        al.menu()
+    except:
+        print(bcolors.FAIL + "Exiting...")
