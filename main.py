@@ -1,9 +1,15 @@
-import pafy , vlc , urllib.request , re , inquirer , sys
+import pafy
+import vlc
+import urllib.request
+import re
+import inquirer
+import sys
 from time import sleep
 from rich.progress import track, Progress
 from youtubesearchpython import PlaylistsSearch
 from os import system
 from colors import bcolors
+
 
 def isWindows():
     if sys.platform == "win32":
@@ -44,8 +50,10 @@ class AudioLine:
         print(f"\n{'-' * 70}\n")
 
         print(bcolors.HEADER + "Now Playing: " + bcolors.OKCYAN + video.title)
-        print(bcolors.HEADER + "\nViews: " + bcolors.OKCYAN + f"{video.viewcount:,d}")
-        print(bcolors.HEADER + "\nDuration: " + bcolors.OKCYAN + video.duration)
+        print(bcolors.HEADER + "\nViews: " +
+              bcolors.OKCYAN + f"{video.viewcount:,d}", end="")
+        print(bcolors.HEADER + "\t\tDuration: " +
+              bcolors.OKCYAN + video.duration)
         print(bcolors.WARNING + "\nPress 'CTRL+C' to Skip Song!\n" + bcolors.ENDC)
 
         with Progress(transient=True) as prog:
@@ -92,7 +100,8 @@ class AudioLine:
             if(res.getcode() == 200):
                 return search
 
-        search_url = "https://www.youtube.com/results?search_query={}" + search.replace(" ", "+")
+        search_url = "https://www.youtube.com/results?search_query={}" + \
+            search.replace(" ", "+")
 
         html = urllib.request.urlopen(search_url)
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
@@ -130,14 +139,15 @@ class AudioLine:
         print("\t███████║██║   ██║██║  ██║██║██║   ██║██║     ██║██╔██╗ ██║█████╗  ")
         print("\t██╔══██║██║   ██║██║  ██║██║██║   ██║██║     ██║██║╚██╗██║██╔══╝  ")
         print("\t██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████╗██║██║ ╚████║███████╗")
-        print("\t╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝")
-        print("\t════════════════════════ v1.0.0 REWRITE ══════════════════════════" , bcolors.ENDC , "\n")
+        print("\t╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝",
+              bcolors.ENDC, "\n")
 
         questions = [
             inquirer.List('option',
-                        message="Choose An Option",
-                        choices=['Video Search/URL', 'Video Search/URL (Autoplay)', 'Playlist URL', 'Playlist Search', 'Exit'],
-                    ),
+                          message="Choose An Option",
+                          choices=[
+                              'Video Search/URL', 'Video Search/URL (Autoplay)', 'Playlist URL', 'Playlist Search', 'Exit'],
+                          ),
         ]
 
         flag = inquirer.prompt(questions)["option"]
@@ -145,8 +155,9 @@ class AudioLine:
         #	ENTER CHOICE
         if flag == "Video Search/URL":
             #	INPUT SEARCH TERM
-            search = input(bcolors.OKCYAN + "Enter Search Term/URL: " + bcolors.ENDC)
-            print(bcolors.ENDC , end="")
+            search = input(bcolors.OKCYAN +
+                           "Enter Search Term/URL: " + bcolors.ENDC)
+            print(bcolors.ENDC, end="")
             # search = "Stephen - play me like a violin"				# For bug fixing
             url = self.search_youtube(search)
             try:
@@ -159,7 +170,8 @@ class AudioLine:
 
         elif flag == "Video Search/URL (Autoplay)":
             #	INPUT SEARCH TERM
-            search = input(bcolors.OKCYAN + "Enter Search Term/URL: " + bcolors.ENDC)
+            search = input(bcolors.OKCYAN +
+                           "Enter Search Term/URL: " + bcolors.ENDC)
             # search = "off the grid"				# For bug fixing
             url = self.search_youtube(search)
             try:
@@ -184,8 +196,9 @@ class AudioLine:
 
         elif flag == 'Playlist Search':
             #	INPUT SEARCH TERM
-            search = input(bcolors.OKCYAN + "Enter Search Term: " + bcolors.ENDC)
-            
+            search = input(bcolors.OKCYAN +
+                           "Enter Search Term: " + bcolors.ENDC)
+
             try:
                 self.search_playlist(search)
             except KeyboardInterrupt:
@@ -193,7 +206,6 @@ class AudioLine:
                 del self.media
                 self.video_ids.clear()
                 exit()
-                
 
         elif flag == 'Exit':
             exit()
