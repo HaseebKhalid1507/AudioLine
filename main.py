@@ -110,15 +110,9 @@ class AudioLine:
 
     #	FUNCTION TO PLAY VIDEOS IN A PLAYLIST
     def play_playlist(self, url):
-
         html = urllib.request.urlopen(url)
-        video_ids_dupes = re.findall(
+        self.video_ids = re.findall(
             r"watch\?v=(\S{11})", html.read().decode())
-
-        #	REMOVE DUPLICATES FROM LIST
-        for i in video_ids_dupes:
-            if i not in self.video_ids and "https://www.youtube.com/watch?v=" + i not in self.played:
-                self.video_ids.append(i)
 
         for i in self.video_ids:
             self.playvideo("https://www.youtube.com/watch?v=" + i)
